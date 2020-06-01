@@ -12,10 +12,17 @@ server.on('request', (req, res) => {
 
   switch (req.method) {
     case 'POST':
-      if (req.headers['content-length'] > 1e6) {
-        res.statusCode = 413;
-        res.end('File is too big!');
-        return;
+      if (pathname.includes('/')) {
+        res.statusCode = 400;
+        res.end();
+
+        break;
+      }
+
+      if (fs.existsSync(filepath)) {
+        res.statusCode = 409;
+        res.end('File exists');
+        break;
       }
 
       const writeStream = fs.createWriteStream(filepath, {flags: 'wx'});
