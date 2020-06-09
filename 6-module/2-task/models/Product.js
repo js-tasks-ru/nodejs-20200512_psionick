@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 const connection = require('../libs/connection');
-const toJson = require('@meanie/mongoose-to-json');
-mongoose.plugin(toJson);
 
 const productSchema = new mongoose.Schema({
   title: {
@@ -33,5 +31,5 @@ const productSchema = new mongoose.Schema({
   images: [String],
 
 });
-productSchema.plugin(toJson);
+
 module.exports = connection.model('Product', productSchema);
