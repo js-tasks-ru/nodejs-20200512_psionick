@@ -17,7 +17,7 @@ const productSchema = new Schema({
   },
   images: [String],
   category: {type: Schema.Types.ObjectId, ref: 'Category', required: true},
-  subcategory: {type: Schema.Types.ObjectId, ref: 'Category', required: true},
+  subcategory: {type: Schema.Types.ObjectId, required: true},
 });
 
 module.exports = connection.model('Product', productSchema);
