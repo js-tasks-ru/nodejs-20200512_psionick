@@ -12,65 +12,51 @@ server.on('request', (req, res) => {
 
   switch (req.method) {
     case 'POST':
-      if (pathname.includes('/')) {
+      if (pathname.includes('/') || pathname.includes('..')) {
         res.statusCode = 400;
-        res.end();
-
-        break;
+        res.end('Nested paths are not allowed');
+        return;
       }
 
-      if (fs.existsSync(filepath)) {
-        res.statusCode = 409;
-        res.end('File exists');
-        break;
-      }
-
-      const writeStream = fs.createWriteStream(filepath, {flags: 'wx'});
-      const limitStream = new LimitSizeStream({limit: 1e6});
-
-      req.on('aborted', () => fs.unlink(filepath, (err) => {
-      }));
-
-      req.pipe(limitStream).pipe(writeStream);
-
-      limitStream.on('error', (err) => {
-        if (err.code === 'LIMIT_EXCEEDED') {
-          res.statusCode = 413;
-          res.end('File is too big');
-
-          fs.unlink(filepath, (err) => {
-          });
-          return;
-        }
-
-        res.statusCode = 500;
-        res.end('Internal server error');
-        fs.unlink(filepath, (err) => {
-        });
-      });
-
-      writeStream
-        .on('error', (err) => {
-          if (err.code === 'EEXIST') {
-            res.statusCode = 409;
-            res.end('File exists');
-            return;
-          }
-
+      const stream = fs.createWriteStream(filepath, {flags: 'wx'});
+      req.pipe(stream);
+      stream.on('error', (error) => {
+        if (error.code === 'EEXIST') {
+          res.statusCode = 409;
+          res.end('File exists');
+        } else {
           res.statusCode = 500;
           res.end('Internal server error');
-          fs.unlink(filepath, (err) => {
-          });
-        })
-        .on('close', () => {
-          res.statusCode = 201;
-          res.end('File created');
-        });
+          fs.unlink(filepath, (error) => {});
+        }
+      });
+
+      stream.on('close', () => {
+        res.statusCode = 201;
+        res.end('file has been saved');
+      });
 
       res.on('close', () => {
-        if (res.writableFinished) return;
-        fs.unlink(filepath, (err) => {
-        });
+        if (res.finished) return;
+        fs.unlink(filepath, (error) => {});
+      });
+
+      const limitStream = new LimitSizeStream({limit: 1e6});
+
+      req
+          .pipe(limitStream)
+          .pipe(stream);
+
+      limitStream.on('error', (error) => {
+        if (error.code === 'LIMIT_EXCEEDED') {
+          res.statusCode = 413;
+          res.end('File is too big');
+        } else {
+          res.statusCode = 500;
+          res.end('Internal server error');
+        }
+
+        fs.unlink(filepath, (err) => {});
       });
 
       break;
