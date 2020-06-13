@@ -15,6 +15,7 @@ server.on('request', (req, res) => {
       if (pathname.includes('/') || pathname.includes('..')) {
         res.statusCode = 400;
         res.end('Nested paths are not allowed');
+        return;
       }
 
       const stream = fs.createWriteStream(filepath, {flags: 'wx'});
@@ -31,6 +32,7 @@ server.on('request', (req, res) => {
       });
 
       stream.on('close', () => {
+        res.statusCode = 201;
         res.end('file has been saved');
       });
 
