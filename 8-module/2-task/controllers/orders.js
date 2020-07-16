@@ -19,6 +19,7 @@ module.exports.checkout = async function checkout(ctx, next) {
     subject: 'Подтверждение заказа',
   });
 
+
   ctx.body = {order: order._id};
 };
 
